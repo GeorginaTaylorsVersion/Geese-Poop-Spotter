@@ -12,7 +12,7 @@ dist/
 .env.local
 .env.development.local
 .env.test.local
-.env.production.local
+# Note: .env.production is tracked so Vercel can use it
 
 # Logs
 npm-debug.log*
