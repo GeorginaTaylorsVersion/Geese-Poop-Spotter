@@ -16,8 +16,9 @@ Or visit: https://nodejs.org/ to download the LTS version for macOS.
 - **🗺️ Interactive Campus Map**: View all reports on an interactive map with University of Waterloo boundaries
 - **🦢 Geese Habitat Map**: Toggle visibility of known geese habitats (lakes, creeks, grassy areas)
 - **⚠️ Aggressive Goose Reporting**: Report aggressive geese encounters with severity levels
-- **📸 Image Upload**: Upload proof images with your reports
-- **📍 Location Services**: Automatic location detection or manual coordinate entry
+- **📸 Image Upload**: Upload proof images with your reports (native camera on mobile)
+- **📍 Location Services**: Automatic location detection or manual coordinate entry (GPS on mobile)
+- **📱 Mobile Apps**: Native iOS and Android apps available (see `MOBILE_APP.md`)
 
 ## Tech Stack
 
@@ -25,6 +26,7 @@ Or visit: https://nodejs.org/ to download the LTS version for macOS.
 - **Backend**: Node.js with Express
 - **Storage**: In-memory storage (easily replaceable with a database)
 - **Maps**: Leaflet with OpenStreetMap tiles
+- **Mobile**: Capacitor for iOS and Android native apps
 
 ## Setup Instructions
 

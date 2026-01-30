@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { UW_BUILDINGS, BUILDING_SIDES } from '../data/buildings';
+import { isMobile, getCurrentLocation, takePhoto, pickPhoto } from '../utils/mobile';
 import './ReportForm.css';
 
 // Use relative URL in production (same server), absolute URL in development
@@ -78,6 +79,48 @@ function ReportForm({ reportType, onSuccess, onCancel, campusBounds, selectedLoc
         setImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      setError('');
+      const file = await takePhoto();
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          setError('Image size must be less than 5MB');
+          return;
+        }
+        setImage(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to take photo');
+    }
+  };
+
+  const handlePickPhoto = async () => {
+    try {
+      setError('');
+      const file = await pickPhoto();
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          setError('Image size must be less than 5MB');
+          return;
+        }
+        setImage(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to pick photo');
     }
   };
 
@@ -190,6 +233,26 @@ function ReportForm({ reportType, onSuccess, onCancel, campusBounds, selectedLoc
           {locationMethod === 'map' && (
             <div className="location-instruction">
               <p>Click anywhere on the map to select the location</p>
+              {isMobile() && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      setError('');
+                      const location = await getCurrentLocation();
+                      setLatitude(location.latitude.toString());
+                      setLongitude(location.longitude.toString());
+                      if (onLocationClear) onLocationClear();
+                    } catch (err) {
+                      setError(err.message || 'Failed to get your location');
+                    }
+                  }}
+                  className="btn-get-location"
+                  style={{ marginTop: '0.5rem', padding: '0.5rem 1rem', backgroundColor: '#C9A961', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  📍 Use My Current Location
+                </button>
+              )}
               {selectedLocation && (
                 <div className="selected-location-info">
                   <p>📍 Location selected: {latitude.substring(0, 8)}, {longitude.substring(0, 8)}</p>
@@ -269,13 +332,34 @@ function ReportForm({ reportType, onSuccess, onCancel, campusBounds, selectedLoc
 
         <div className="form-group">
           <label>Poop Proof Image (optional)</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            ref={fileInputRef}
-            className="form-file-input"
-          />
+          {isMobile() ? (
+            <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+              <button
+                type="button"
+                onClick={handleTakePhoto}
+                className="btn-camera"
+                style={{ padding: '0.5rem 1rem', backgroundColor: '#C9A961', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                📷 Take Photo
+              </button>
+              <button
+                type="button"
+                onClick={handlePickPhoto}
+                className="btn-gallery"
+                style={{ padding: '0.5rem 1rem', backgroundColor: '#718096', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                🖼️ Choose from Gallery
+              </button>
+            </div>
+          ) : (
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              ref={fileInputRef}
+              className="form-file-input"
+            />
+          )}
           {imagePreview && (
             <div className="image-preview">
               <img src={imagePreview} alt="Preview" />

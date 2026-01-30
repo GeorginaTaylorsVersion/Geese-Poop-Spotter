@@ -13,6 +13,9 @@
     "build:client": "cd client && npm install && npm run build",
     "start": "cd server && npm start",
     "start:prod": "npm run build && PORT=5001 NODE_ENV=production npm start",
+    "mobile:build": "cd client && npm run cap:build",
+    "mobile:ios": "cd client && npm run cap:ios",
+    "mobile:android": "cd client && npm run cap:android",
     "postinstall": "npm run install-all"
   },
   "keywords": ["geese", "waterloo", "campus", "map"],
