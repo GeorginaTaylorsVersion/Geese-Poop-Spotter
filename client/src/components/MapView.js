@@ -19,7 +19,7 @@ const createIconUrl = (svgString) => {
 
 // Custom icons - Gold glittery poop emoji
 const poopIcon = L.divIcon({
-  html: '<div style="font-size: 32px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5)); text-shadow: 0 0 8px rgba(201, 169, 97, 0.8);">✨💩✨</div>',
+  html: '<div style="font-size: 32px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5)); text-shadow: 0 0 8px rgba(201, 169, 97, 0.8);">💩</div>',
   className: 'custom-poop-icon',
   iconSize: [40, 40],
   iconAnchor: [20, 40],
@@ -172,13 +172,13 @@ function MapView({ reports, habitats, campusBounds, onReportClick, onMapClick, s
           >
             <Popup>
               <div className="custom-popup">
-                <h3>{report.type === 'aggressive' ? '⚠️ Aggressive Goose' : '✨💩✨ Poop Report'}</h3>
+                <h3>{report.type === 'aggressive' ? '⚠️ Aggressive Goose' : '💩 Poop Report'}</h3>
                 {report.description && <p>{report.description}</p>}
                 <p><strong>Severity:</strong> {report.severity}</p>
                 <p><small>{new Date(report.timestamp).toLocaleString()}</small></p>
                 {report.imageUrl && (
                   <img
-                    src={`http://localhost:5000${report.imageUrl}`}
+                    src={report.imageUrl}
                     alt="Proof"
                     style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '0.5rem', borderRadius: '8px' }}
                   />

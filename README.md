@@ -67,6 +67,24 @@ Or visit: https://nodejs.org/ to download the LTS version for macOS.
 
 3. **Open your browser** and navigate to `http://localhost:3000`
 
+### Production Build (Localhost)
+
+To build and run the production version locally:
+
+1. **Build the React app and start the production server**:
+   ```bash
+   npm run start:prod
+   ```
+
+   This will:
+   - Build the optimized React production bundle
+   - Start the server in production mode on port 5001
+   - Serve both the API and the React app from the same server
+
+2. **Open your browser** and navigate to `http://localhost:5001`
+
+   The production build is optimized and minified for better performance. Both the frontend and API are served from the same port, so all API calls use relative URLs.
+
 ## Project Structure
 
 ```

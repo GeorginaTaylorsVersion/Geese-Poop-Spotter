@@ -111,35 +111,40 @@ app.get('/api/reports/:id', (req, res) => {
 
 // Create a new report
 app.post('/api/reports', upload.single('image'), (req, res) => {
-  const { type, latitude, longitude, description, severity } = req.body;
-  
-  // Validate coordinates are within campus
-  const lat = parseFloat(latitude);
-  const lng = parseFloat(longitude);
-  
-  if (!isWithinCampus(lat, lng)) {
-    return res.status(400).json({ 
-      error: 'Location must be within University of Waterloo campus boundaries' 
-    });
+  try {
+    const { type, latitude, longitude, description, severity } = req.body;
+    
+    // Validate coordinates are within campus
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    
+    if (!isWithinCampus(lat, lng)) {
+      return res.status(400).json({ 
+        error: 'Location must be within University of Waterloo campus boundaries' 
+      });
+    }
+    
+    if (!type || !latitude || !longitude) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const report = {
+      id: uuidv4(),
+      type, // 'poop' or 'aggressive'
+      latitude: lat,
+      longitude: lng,
+      description: description || '',
+      severity: severity || 'medium',
+      imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
+      timestamp: new Date().toISOString()
+    };
+    
+    reports.push(report);
+    res.status(201).json(report);
+  } catch (error) {
+    console.error('Error creating report:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-  
-  if (!type || !latitude || !longitude) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-  
-  const report = {
-    id: uuidv4(),
-    type, // 'poop' or 'aggressive'
-    latitude: lat,
-    longitude: lng,
-    description: description || '',
-    severity: severity || 'medium',
-    imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
-    timestamp: new Date().toISOString()
-  };
-  
-  reports.push(report);
-  res.status(201).json(report);
 });
 
 // Get geese habitats
@@ -157,6 +162,28 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Serve React app in production
+if (process.env.NODE_ENV === 'production') {
+  const clientBuildPath = path.join(__dirname, '../client/build');
+  
+  // Serve static files from React build, but only for non-API routes
+  // API routes are already defined above, so they'll be matched first
+  app.use(express.static(clientBuildPath));
+  
+  // Handle React routing - catch all GET requests that don't match API routes
+  // API routes are defined above, so Express will match them first
+  app.get('*', (req, res) => {
+    // Double-check: if somehow an API route reaches here, return 404
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+}
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  if (process.env.NODE_ENV === 'production') {
+    console.log('Serving React app from production build');
+  }
 });

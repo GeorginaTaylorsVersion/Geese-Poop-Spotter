@@ -34,7 +34,7 @@ function ReportList({ reports }) {
               <div key={report.id} className="report-card">
                 <div className="report-header">
                   <span className="report-type">
-                    {report.type === 'aggressive' ? '⚠️ Aggressive' : '✨💩✨ Poop'}
+                    {report.type === 'aggressive' ? '⚠️ Aggressive' : '💩 Poop'}
                   </span>
                   <span
                     className="severity-badge"
@@ -49,7 +49,7 @@ function ReportList({ reports }) {
                 {report.imageUrl && (
                   <div className="report-image">
                     <img
-                      src={`http://localhost:5000${report.imageUrl}`}
+                      src={report.imageUrl}
                       alt="Proof"
                     />
                   </div>

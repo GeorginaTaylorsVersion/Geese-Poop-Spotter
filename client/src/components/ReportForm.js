@@ -3,7 +3,9 @@ import axios from 'axios';
 import { UW_BUILDINGS, BUILDING_SIDES } from '../data/buildings';
 import './ReportForm.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Use relative URL in production (same server), absolute URL in development
+const API_BASE_URL = process.env.REACT_APP_API_URL || 
+  (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api');
 
 function ReportForm({ reportType, onSuccess, onCancel, campusBounds, selectedLocation, onLocationClear }) {
   const [locationMethod, setLocationMethod] = useState('map'); // 'map' or 'building'
@@ -155,7 +157,7 @@ function ReportForm({ reportType, onSuccess, onCancel, campusBounds, selectedLoc
   return (
     <div className="report-form-container">
       <h2 className="form-title">
-        {reportType === 'aggressive' ? '⚠️ Report Aggressive Goose' : '✨💩✨ Report Geese Poop'}
+        {reportType === 'aggressive' ? '⚠️ Report Aggressive Goose' : '💩 Report Geese Poop'}
       </h2>
       
       <form onSubmit={handleSubmit} className="report-form">

@@ -4,7 +4,9 @@ import ReportForm from './components/ReportForm';
 import ReportList from './components/ReportList';
 import './App.css';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Use relative URL in production (same server), absolute URL in development
+const API_BASE_URL = process.env.REACT_APP_API_URL || 
+  (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api');
 
 function App() {
   const [reports, setReports] = useState([]);
@@ -85,7 +87,7 @@ function App() {
               className={`btn btn-secondary ${showForm ? 'active' : ''}`}
               onClick={() => setShowForm(true)}
             >
-              ✨💩✨ Report Poop
+              💩 Report Poop
             </button>
             <button
               className={`btn btn-danger ${showForm && selectedReportType === 'aggressive' ? 'active' : ''}`}
