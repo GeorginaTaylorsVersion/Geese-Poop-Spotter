@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import MapView from './components/MapView';
 import ReportForm from './components/ReportForm';
 import ReportList from './components/ReportList';
@@ -17,13 +17,7 @@ function App() {
   const [campusBounds, setCampusBounds] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
 
-  useEffect(() => {
-    fetchReports();
-    fetchHabitats();
-    fetchCampusBounds();
-  }, [filterType]);
-
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       const url = filterType === 'all' 
         ? `${API_BASE_URL}/reports`
@@ -34,9 +28,9 @@ function App() {
     } catch (error) {
       console.error('Error fetching reports:', error);
     }
-  };
+  }, [filterType]);
 
-  const fetchHabitats = async () => {
+  const fetchHabitats = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/habitats`);
       const data = await response.json();
@@ -44,9 +38,9 @@ function App() {
     } catch (error) {
       console.error('Error fetching habitats:', error);
     }
-  };
+  }, []);
 
-  const fetchCampusBounds = async () => {
+  const fetchCampusBounds = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/campus-bounds`);
       const data = await response.json();
@@ -54,7 +48,13 @@ function App() {
     } catch (error) {
       console.error('Error fetching campus bounds:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchReports();
+    fetchHabitats();
+    fetchCampusBounds();
+  }, [fetchReports, fetchHabitats, fetchCampusBounds]);
 
   const handleReportSubmit = () => {
     fetchReports();
