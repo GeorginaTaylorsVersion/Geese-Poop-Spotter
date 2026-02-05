@@ -96,12 +96,12 @@ let habitats = [
   }
 ];
 
-// University of Waterloo campus boundaries (approximate)
+// University of Waterloo campus boundaries (within ring road)
 const CAMPUS_BOUNDS = {
-  north: 43.4800,
-  south: 43.4600,
-  east: -80.5300,
-  west: -80.5500
+  north: 43.4735,
+  south: 43.4665,
+  east: -80.5320,
+  west: -80.5480
 };
 
 // Helper function to check if coordinates are within campus bounds
