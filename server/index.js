@@ -102,8 +102,8 @@ const CAMPUS_BOUNDS = {
 function isWithinCampus(lat, lng) {
   return lat >= CAMPUS_BOUNDS.south && 
          lat <= CAMPUS_BOUNDS.north && 
-         lng >= CAMPUS_BOUNDS.west && 
-         lng <= CAMPUS_BOUNDS.east;
+         lng <= CAMPUS_BOUNDS.west && 
+         lng >= CAMPUS_BOUNDS.east;
 }
 
 // Routes
