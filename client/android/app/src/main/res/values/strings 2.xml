@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Geese Poop Spotter</string>
+    <string name="title_activity_main">Geese Poop Spotter</string>
+    <string name="package_name">com.waterloo.geesepoopspotter</string>
+    <string name="custom_url_scheme">com.waterloo.geesepoopspotter</string>
+</resources>

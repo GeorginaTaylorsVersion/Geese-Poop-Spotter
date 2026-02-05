@@ -1,0 +1,3 @@
+# Production API URL - Update this with your Render backend URL
+# Example: REACT_APP_API_URL=https://geese-poop-spotter-api.onrender.com/api
+REACT_APP_API_URL=REPLACE_WITH_YOUR_RENDER_URL/api
