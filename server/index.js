@@ -134,18 +134,30 @@ app.post('/api/reports', upload.single('image'), (req, res) => {
   try {
     const { type, latitude, longitude, description, severity } = req.body;
     
-    // Validate coordinates are within campus
+    console.log('Report submission received:', { type, latitude, longitude, description, severity });
+    
+    // Validate required fields first
+    if (!type || !latitude || !longitude) {
+      console.error('Missing required fields:', { type, latitude, longitude });
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Parse and validate coordinates
     const lat = parseFloat(latitude);
     const lng = parseFloat(longitude);
     
+    console.log('Parsed coordinates:', { lat, lng });
+    console.log('Campus bounds:', CAMPUS_BOUNDS);
+    
+    if (isNaN(lat) || isNaN(lng)) {
+      return res.status(400).json({ error: 'Invalid latitude or longitude values' });
+    }
+    
     if (!isWithinCampus(lat, lng)) {
+      console.error('Location outside campus bounds:', { lat, lng });
       return res.status(400).json({ 
         error: 'Location must be within University of Waterloo campus boundaries' 
       });
-    }
-    
-    if (!type || !latitude || !longitude) {
-      return res.status(400).json({ error: 'Missing required fields' });
     }
     
     const report = {
