@@ -100,10 +100,12 @@ const CAMPUS_BOUNDS = {
 
 // Helper function to check if coordinates are within campus bounds
 function isWithinCampus(lat, lng) {
+  const minLng = Math.min(CAMPUS_BOUNDS.west, CAMPUS_BOUNDS.east);
+  const maxLng = Math.max(CAMPUS_BOUNDS.west, CAMPUS_BOUNDS.east);
   return lat >= CAMPUS_BOUNDS.south && 
          lat <= CAMPUS_BOUNDS.north && 
-         lng <= CAMPUS_BOUNDS.west && 
-         lng >= CAMPUS_BOUNDS.east;
+         lng >= minLng && 
+         lng <= maxLng;
 }
 
 // Routes
