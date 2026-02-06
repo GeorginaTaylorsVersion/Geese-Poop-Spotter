@@ -48,7 +48,7 @@ function CampusBounds({ bounds }) {
       map.fitBounds([
         [bounds.south, bounds.west],
         [bounds.north, bounds.east]
-      ], { padding: [50, 50] });
+      ], { padding: [50, 50], maxZoom: 16 });
     }
   }, [bounds, map]);
   
