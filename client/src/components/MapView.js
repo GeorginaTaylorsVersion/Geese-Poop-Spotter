@@ -126,23 +126,6 @@ function MapView({ reports, habitats, campusBounds, onReportClick, onMapClick, s
           </Marker>
         )}
         
-        {/* Campus boundary overlay */}
-        {campusBounds && (
-          <Polygon
-            positions={[
-              [campusBounds.south, campusBounds.west],
-              [campusBounds.north, campusBounds.west],
-              [campusBounds.north, campusBounds.east],
-              [campusBounds.south, campusBounds.east],
-            ]}
-            color="#C9A961"
-            fillColor="#C9A961"
-            fillOpacity={0.15}
-            weight={2}
-            dashArray="5, 5"
-          />
-        )}
-        
         {/* Geese habitats */}
         {showHabitats && habitats.map((habitat) => (
           <Polygon
