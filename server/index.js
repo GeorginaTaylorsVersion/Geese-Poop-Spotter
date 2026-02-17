@@ -5,14 +5,13 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const bodyParser = require('body-parser');
+const { createReportStore, REPORT_RETENTION_DAYS } = require('./reportStore');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-const DATA_FILE = path.join(__dirname, 'data', 'reports.json');
-const DATA_DIR = path.join(__dirname, 'data');
-
-const REPORT_RETENTION_DAYS = 7;
+const uploadsDir = path.join(__dirname, 'uploads');
+const reportStore = createReportStore();
+let cleanupInterval;
 
 // Middleware
 // Configure CORS to allow requests from your frontend
@@ -43,10 +42,9 @@ app.use(cors({
 }));
 
 app.use(bodyParser.json());
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(uploadsDir));
 
 // Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -54,7 +52,7 @@ if (!fs.existsSync(uploadsDir)) {
 // Configure multer for image uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
     const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
@@ -78,55 +76,7 @@ const upload = multer({
   }
 });
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-// Load reports from file
-function loadReports() {
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      const data = fs.readFileSync(DATA_FILE, 'utf8');
-      return JSON.parse(data);
-    }
-  } catch (error) {
-    console.error('Error loading reports:', error);
-  }
-  return [];
-}
-
-// Save reports to file
-function saveReports(reportsData) {
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(reportsData, null, 2));
-  } catch (error) {
-    console.error('Error saving reports:', error);
-  }
-}
-
-// Clean up reports older than retention period
-function cleanupOldReports() {
-  const now = new Date();
-  const cutoffDate = new Date(now.getTime() - REPORT_RETENTION_DAYS * 24 * 60 * 60 * 1000);
-  
-  const beforeCount = reports.length;
-  reports = reports.filter(r => new Date(r.timestamp) > cutoffDate);
-  const removedCount = beforeCount - reports.length;
-  
-  if (removedCount > 0) {
-    console.log(`Cleaned up ${removedCount} old report(s)`);
-    saveReports(reports);
-  }
-}
-
-// Initialize reports from file and clean up old ones
-let reports = loadReports();
-cleanupOldReports();
-
-// Clean up old reports every hour
-setInterval(cleanupOldReports, 60 * 60 * 1000);
-let habitats = [
+const habitats = [
   {
     id: '1',
     name: 'Columbia Lake',
@@ -165,31 +115,40 @@ function isWithinCampus(lat, lng) {
          lng <= maxLng;
 }
 
+function getImageUrl(fileName) {
+  return fileName ? `/uploads/${fileName}` : null;
+}
+
 // Routes
 
 // Get all reports
-app.get('/api/reports', (req, res) => {
-  const { type } = req.query;
-  let filteredReports = reports;
-  
-  if (type) {
-    filteredReports = reports.filter(r => r.type === type);
+app.get('/api/reports', async (req, res) => {
+  try {
+    const { type } = req.query;
+    const filteredReports = await reportStore.getReports(type);
+    res.json(filteredReports);
+  } catch (error) {
+    console.error('Error fetching reports:', error);
+    res.status(500).json({ error: 'Failed to fetch reports' });
   }
-  
-  res.json(filteredReports);
 });
 
 // Get a specific report
-app.get('/api/reports/:id', (req, res) => {
-  const report = reports.find(r => r.id === req.params.id);
-  if (!report) {
-    return res.status(404).json({ error: 'Report not found' });
+app.get('/api/reports/:id', async (req, res) => {
+  try {
+    const report = await reportStore.getReportById(req.params.id);
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+    res.json(report);
+  } catch (error) {
+    console.error('Error fetching report:', error);
+    res.status(500).json({ error: 'Failed to fetch report' });
   }
-  res.json(report);
 });
 
 // Create a new report
-app.post('/api/reports', upload.single('image'), (req, res) => {
+app.post('/api/reports', upload.single('image'), async (req, res) => {
   try {
     const { type, latitude, longitude, description, severity } = req.body;
     
@@ -226,17 +185,61 @@ app.post('/api/reports', upload.single('image'), (req, res) => {
       longitude: lng,
       description: description || '',
       severity: severity || 'medium',
-      imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
+      imageUrl: getImageUrl(req.file ? req.file.filename : null),
       timestamp: new Date().toISOString()
     };
     
-    reports.push(report);
-    saveReports(reports);
-    res.status(201).json(report);
+    const savedReport = await reportStore.createReport(report);
+    res.status(201).json(savedReport);
   } catch (error) {
     console.error('Error creating report:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+async function startServer() {
+  await reportStore.init();
+
+  cleanupInterval = setInterval(async () => {
+    try {
+      const removedCount = await reportStore.cleanupOldReports();
+      if (removedCount > 0) {
+        console.log(`Cleaned up ${removedCount} old report(s)`);
+      }
+    } catch (error) {
+      console.error('Error cleaning up reports:', error);
+    }
+  }, 60 * 60 * 1000);
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Report storage mode: ${reportStore.mode}`);
+    console.log(`Report retention: ${REPORT_RETENTION_DAYS} day(s)`);
+  });
+}
+
+async function shutdown(signal) {
+  console.log(`Received ${signal}. Shutting down gracefully...`);
+
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+  }
+
+  try {
+    await reportStore.close();
+  } catch (error) {
+    console.error('Error while closing report store:', error);
+  } finally {
+    process.exit(0);
+  }
+}
+
+process.on('SIGINT', () => {
+  shutdown('SIGINT');
+});
+
+process.on('SIGTERM', () => {
+  shutdown('SIGTERM');
 });
 
 // Get geese habitats
@@ -254,6 +257,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+startServer().catch((error) => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
 });

@@ -16,17 +16,25 @@ function App() {
   const [filterType, setFilterType] = useState('all');
   const [campusBounds, setCampusBounds] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [reportsError, setReportsError] = useState('');
 
-  const fetchReports = useCallback(async () => {
+  const fetchReports = useCallback(async (silent = false) => {
     try {
       const url = filterType === 'all' 
         ? `${API_BASE_URL}/reports`
         : `${API_BASE_URL}/reports?type=${filterType}`;
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed with status ${response.status}`);
+      }
       const data = await response.json();
       setReports(data);
+      setReportsError('');
     } catch (error) {
       console.error('Error fetching reports:', error);
+      if (!silent) {
+        setReportsError('Unable to load shared reports right now. Please refresh in a moment.');
+      }
     }
   }, [filterType]);
 
@@ -55,6 +63,14 @@ function App() {
     fetchHabitats();
     fetchCampusBounds();
   }, [fetchReports, fetchHabitats, fetchCampusBounds]);
+
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      fetchReports(true);
+    }, 30000);
+
+    return () => clearInterval(refreshInterval);
+  }, [fetchReports]);
 
   const handleReportSubmit = () => {
     fetchReports();
@@ -111,6 +127,8 @@ function App() {
               <option value="poop">Poop Reports</option>
               <option value="aggressive">Aggressive Goose Reports</option>
             </select>
+            <p className="sync-note">Shared reports auto-refresh every 30s and expire after 7 days.</p>
+            {reportsError && <p className="sync-error">{reportsError}</p>}
           </div>
 
           {showForm ? (

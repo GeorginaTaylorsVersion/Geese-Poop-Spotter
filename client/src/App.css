@@ -152,6 +152,19 @@
   box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.2);
 }
 
+.sync-note {
+  margin: 0.65rem 0 0 0;
+  font-size: 0.8rem;
+  color: #444;
+}
+
+.sync-error {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.8rem;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
 /* Leaflet map styles */
 .leaflet-container {
   height: 100%;

@@ -63,6 +63,11 @@ We'll deploy in two parts:
    - Add environment variable:
      - Key: `NODE_ENV`
      - Value: `production`
+   - Add environment variable:
+     - Key: `DATABASE_URL`
+     - Value: your PostgreSQL connection string
+
+   ✅ `DATABASE_URL` is required if you want reports to be shared reliably for all users across backend restarts.
 
 6. **Click "Create Web Service"**
 
@@ -199,6 +204,12 @@ Vercel will automatically redeploy.
 1. Use cloud storage (AWS S3, Cloudinary) - recommended for production
 2. Upgrade to Render's paid plan with persistent disk
 3. Use a database to store images as base64 (not recommended for many images)
+
+### Report Persistence
+
+- Without `DATABASE_URL`, reports are stored in a local JSON file on the backend instance.
+- On platforms with ephemeral disks, these reports may disappear after restarts.
+- Set `DATABASE_URL` to keep reports shared and durable for the full 7-day retention window.
 
 ---
 

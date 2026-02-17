@@ -24,7 +24,9 @@ Or visit: https://nodejs.org/ to download the LTS version for macOS.
 
 - **Frontend**: React 18 with React-Leaflet for maps
 - **Backend**: Node.js with Express
-- **Storage**: In-memory storage (easily replaceable with a database)
+- **Storage**: Shared reports with 7-day retention
+  - PostgreSQL when `DATABASE_URL` is configured (recommended for production)
+  - Local JSON file fallback (`server/data/reports.json`) for local development
 - **Maps**: Leaflet with OpenStreetMap tiles
 - **Mobile**: Capacitor for iOS and Android native apps
 
@@ -117,6 +119,12 @@ geese-poop-spotter/
 - `GET /api/campus-bounds` - Get University of Waterloo campus boundaries
 - `GET /api/health` - Health check endpoint
 
+## Data Retention
+
+- Reports are shared with all users connected to the same backend.
+- Reports are automatically removed after 7 days.
+- For production, set `DATABASE_URL` so reports survive server restarts.
+
 ## Campus Boundaries
 
 The app is restricted to University of Waterloo campus boundaries:
@@ -152,7 +160,6 @@ Reports outside these boundaries will be rejected.
 
 ## Future Enhancements
 
-- Database integration (MongoDB, PostgreSQL, etc.)
 - User authentication
 - Report statistics and analytics
 - Heat maps for high-traffic areas
