@@ -9,6 +9,11 @@ const bodyParser = require('body-parser');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const DATA_FILE = path.join(__dirname, 'data', 'reports.json');
+const DATA_DIR = path.join(__dirname, 'data');
+
+const REPORT_RETENTION_DAYS = 7;
+
 // Middleware
 // Configure CORS to allow requests from your frontend
 const allowedOrigins = [
@@ -73,8 +78,54 @@ const upload = multer({
   }
 });
 
-// In-memory data storage (in production, use a database)
-let reports = [];
+// Ensure data directory exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+// Load reports from file
+function loadReports() {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const data = fs.readFileSync(DATA_FILE, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error loading reports:', error);
+  }
+  return [];
+}
+
+// Save reports to file
+function saveReports(reportsData) {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(reportsData, null, 2));
+  } catch (error) {
+    console.error('Error saving reports:', error);
+  }
+}
+
+// Clean up reports older than retention period
+function cleanupOldReports() {
+  const now = new Date();
+  const cutoffDate = new Date(now.getTime() - REPORT_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  
+  const beforeCount = reports.length;
+  reports = reports.filter(r => new Date(r.timestamp) > cutoffDate);
+  const removedCount = beforeCount - reports.length;
+  
+  if (removedCount > 0) {
+    console.log(`Cleaned up ${removedCount} old report(s)`);
+    saveReports(reports);
+  }
+}
+
+// Initialize reports from file and clean up old ones
+let reports = loadReports();
+cleanupOldReports();
+
+// Clean up old reports every hour
+setInterval(cleanupOldReports, 60 * 60 * 1000);
 let habitats = [
   {
     id: '1',
@@ -180,6 +231,7 @@ app.post('/api/reports', upload.single('image'), (req, res) => {
     };
     
     reports.push(report);
+    saveReports(reports);
     res.status(201).json(report);
   } catch (error) {
     console.error('Error creating report:', error);
