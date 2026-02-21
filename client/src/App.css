@@ -32,7 +32,8 @@
 }
 
 .sidebar {
-  width: 350px;
+  width: 390px;
+  min-width: 320px;
   background: #ffffff;
   border-right: 2px solid #C9A961;
   display: flex;
@@ -163,6 +164,43 @@
   font-size: 0.8rem;
   color: #b91c1c;
   font-weight: 600;
+}
+
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 360px;
+  }
+}
+
+@media (max-width: 768px) {
+  .App {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .app-header {
+    padding: 1rem 1rem 0.9rem 1rem;
+  }
+
+  .app-header h1 {
+    font-size: 1.45rem;
+  }
+
+  .main-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-width: 0;
+    max-height: 58vh;
+    border-right: none;
+    border-bottom: 2px solid #C9A961;
+  }
+
+  .map-container {
+    min-height: 42vh;
+  }
 }
 
 /* Leaflet map styles */

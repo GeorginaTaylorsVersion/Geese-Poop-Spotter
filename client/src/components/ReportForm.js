@@ -8,7 +8,15 @@ import './ReportForm.css';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 
   (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api');
 
-function ReportForm({ reportType, onSuccess, onCancel, campusBounds, selectedLocation, onLocationClear }) {
+function ReportForm({
+  reportType,
+  onSuccess,
+  onCancel,
+  campusBounds,
+  selectedLocation,
+  onLocationClear,
+  currentUser
+}) {
   const [locationMethod, setLocationMethod] = useState('map'); // 'map' or 'building'
   const [selectedBuilding, setSelectedBuilding] = useState('');
   const [buildingSide, setBuildingSide] = useState('');
@@ -160,6 +168,12 @@ function ReportForm({ reportType, onSuccess, onCancel, campusBounds, selectedLoc
       
       formData.append('description', fullDescription);
       formData.append('severity', severity);
+      if (currentUser && currentUser.id) {
+        formData.append('userId', currentUser.id);
+      }
+      if (currentUser && currentUser.displayName) {
+        formData.append('userName', currentUser.displayName);
+      }
       if (image) {
         formData.append('image', image);
       }
@@ -202,6 +216,11 @@ function ReportForm({ reportType, onSuccess, onCancel, campusBounds, selectedLoc
       <h2 className="form-title">
         {reportType === 'aggressive' ? '⚠️ Report Aggressive Goose' : '💩 Report Geese Poop'}
       </h2>
+      {currentUser && (
+        <p className="form-profile-hint">
+          Posting as {currentUser.avatarEmoji || '🦢'} {currentUser.displayName}
+        </p>
+      )}
       
       <form onSubmit={handleSubmit} className="report-form">
         <div className="form-group">

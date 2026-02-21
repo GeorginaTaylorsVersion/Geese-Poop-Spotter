@@ -156,8 +156,14 @@ function MapView({ reports, habitats, campusBounds, onReportClick, onMapClick, s
             <Popup>
               <div className="custom-popup">
                 <h3>{report.type === 'aggressive' ? '⚠️ Aggressive Goose' : '💩 Poop Report'}</h3>
+                <p><strong>By:</strong> {report.authorName || 'Goose Watcher'}</p>
                 {report.description && <p>{report.description}</p>}
                 <p><strong>Severity:</strong> {report.severity}</p>
+                <p>
+                  <strong>Social:</strong>{' '}
+                  👍 {report.reactions ? report.reactions.like : 0} · ⬆️{' '}
+                  {report.reactions ? report.reactions.upvote : 0} · 💬 {report.commentCount || 0}
+                </p>
                 <p><small>{new Date(report.timestamp).toLocaleString()}</small></p>
                 {report.imageUrl && (
                   <img

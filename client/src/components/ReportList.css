@@ -17,6 +17,13 @@
   color: #718096;
 }
 
+.report-action-error {
+  margin-bottom: 0.75rem;
+  font-size: 0.82rem;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
 .reports-list {
   display: flex;
   flex-direction: column;
@@ -64,6 +71,14 @@
   color: #4a5568;
   font-size: 0.9rem;
   line-height: 1.5;
+  white-space: pre-line;
+}
+
+.report-author {
+  margin: 0.35rem 0 0 0;
+  font-size: 0.8rem;
+  color: #555;
+  font-weight: 600;
 }
 
 .report-image {
@@ -76,6 +91,126 @@
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid #e2e8f0;
+}
+
+.report-social-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.social-btn {
+  border: 1px solid #d6d2c4;
+  background: #f9f9f9;
+  color: #2d2d2d;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.32rem 0.75rem;
+  cursor: pointer;
+}
+
+.social-btn:hover {
+  border-color: #c9a961;
+}
+
+.social-btn.active {
+  background: #111;
+  border-color: #111;
+  color: #f2dfaf;
+}
+
+.social-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.comments-section {
+  margin-top: 0.75rem;
+  border: 1px solid #ece7d8;
+  border-radius: 8px;
+  padding: 0.6rem;
+  background: #fffdfa;
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.comments-empty {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.comment-row {
+  border-bottom: 1px solid #f0ecde;
+  padding-bottom: 0.45rem;
+}
+
+.comment-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.comment-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.comment-meta strong {
+  font-size: 0.78rem;
+  color: #202020;
+}
+
+.comment-meta span {
+  font-size: 0.7rem;
+  color: #777;
+}
+
+.comment-row p {
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  color: #3f3f3f;
+}
+
+.comment-compose {
+  margin-top: 0.55rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.comment-compose textarea {
+  flex: 1;
+  min-height: 44px;
+  max-height: 88px;
+  resize: vertical;
+  font-size: 0.82rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.45rem;
+  font-family: inherit;
+}
+
+.comment-compose button {
+  border: 1px solid #111;
+  background: #111;
+  color: #f2dfaf;
+  border-radius: 7px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.comment-compose button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .report-footer {

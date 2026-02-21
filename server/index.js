@@ -5,13 +5,22 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const bodyParser = require('body-parser');
-const { createReportStore, REPORT_RETENTION_DAYS } = require('./reportStore');
+const {
+  createReportStore,
+  REPORT_RETENTION_DAYS,
+  LEADERBOARD_WINDOW_DAYS,
+  VALID_REACTION_TYPES
+} = require('./reportStore');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const uploadsDir = path.join(__dirname, 'uploads');
 const reportStore = createReportStore();
 let cleanupInterval;
+const MAX_USER_ID_LENGTH = 128;
+const MAX_DISPLAY_NAME_LENGTH = 40;
+const MAX_BIO_LENGTH = 160;
+const MAX_COMMENT_LENGTH = 500;
 
 // Middleware
 // Configure CORS to allow requests from your frontend
@@ -119,13 +128,33 @@ function getImageUrl(fileName) {
   return fileName ? `/uploads/${fileName}` : null;
 }
 
+function sanitizeText(value, maxLength) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  return value.trim().slice(0, maxLength);
+}
+
+function sanitizeUserId(value) {
+  return sanitizeText(value, MAX_USER_ID_LENGTH);
+}
+
+function getDefaultDisplayName(userId) {
+  if (!userId) {
+    return 'Goose Watcher';
+  }
+  return `Goose Watcher ${userId.slice(-4).toUpperCase()}`;
+}
+
 // Routes
 
 // Get all reports
 app.get('/api/reports', async (req, res) => {
   try {
-    const { type } = req.query;
-    const filteredReports = await reportStore.getReports(type);
+    const { type, viewerId } = req.query;
+    const filteredReports = await reportStore.getReports(type, {
+      viewerId: sanitizeUserId(viewerId)
+    });
     res.json(filteredReports);
   } catch (error) {
     console.error('Error fetching reports:', error);
@@ -136,7 +165,9 @@ app.get('/api/reports', async (req, res) => {
 // Get a specific report
 app.get('/api/reports/:id', async (req, res) => {
   try {
-    const report = await reportStore.getReportById(req.params.id);
+    const report = await reportStore.getReportById(req.params.id, {
+      viewerId: sanitizeUserId(req.query.viewerId)
+    });
     if (!report) {
       return res.status(404).json({ error: 'Report not found' });
     }
@@ -150,7 +181,19 @@ app.get('/api/reports/:id', async (req, res) => {
 // Create a new report
 app.post('/api/reports', upload.single('image'), async (req, res) => {
   try {
-    const { type, latitude, longitude, description, severity } = req.body;
+    const {
+      type,
+      latitude,
+      longitude,
+      description,
+      severity,
+      userId: rawUserId,
+      userName: rawUserName
+    } = req.body;
+
+    const userId = sanitizeUserId(rawUserId);
+    const userName = sanitizeText(rawUserName, MAX_DISPLAY_NAME_LENGTH);
+    const authorName = userName || getDefaultDisplayName(userId);
     
     console.log('Report submission received:', { type, latitude, longitude, description, severity });
     
@@ -186,14 +229,145 @@ app.post('/api/reports', upload.single('image'), async (req, res) => {
       description: description || '',
       severity: severity || 'medium',
       imageUrl: getImageUrl(req.file ? req.file.filename : null),
+      authorId: userId,
+      authorName,
       timestamp: new Date().toISOString()
     };
+
+    if (userId) {
+      const existingProfile = await reportStore.getProfileById(userId);
+      if (!existingProfile) {
+        await reportStore.upsertProfile({
+          id: userId,
+          displayName: authorName
+        });
+      }
+    }
     
     const savedReport = await reportStore.createReport(report);
     res.status(201).json(savedReport);
   } catch (error) {
     console.error('Error creating report:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get a profile
+app.get('/api/profiles/:id', async (req, res) => {
+  try {
+    const userId = sanitizeUserId(req.params.id);
+    if (!userId) {
+      return res.status(400).json({ error: 'Invalid user id' });
+    }
+
+    const profile = await reportStore.getProfileById(userId);
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    res.json(profile);
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
+// Create or update a profile
+app.put('/api/profiles/:id', async (req, res) => {
+  try {
+    const userId = sanitizeUserId(req.params.id);
+    const displayName = sanitizeText(req.body.displayName, MAX_DISPLAY_NAME_LENGTH);
+    const bio = sanitizeText(req.body.bio, MAX_BIO_LENGTH);
+    const avatarEmoji = sanitizeText(req.body.avatarEmoji, 8);
+
+    if (!userId) {
+      return res.status(400).json({ error: 'Invalid user id' });
+    }
+
+    const savedProfile = await reportStore.upsertProfile({
+      id: userId,
+      displayName: displayName || getDefaultDisplayName(userId),
+      bio,
+      avatarEmoji
+    });
+
+    if (!savedProfile) {
+      return res.status(400).json({ error: 'Unable to save profile' });
+    }
+
+    res.json(savedProfile);
+  } catch (error) {
+    console.error('Error saving profile:', error);
+    res.status(500).json({ error: 'Failed to save profile' });
+  }
+});
+
+// Add a comment to a report
+app.post('/api/reports/:id/comments', async (req, res) => {
+  try {
+    const userId = sanitizeUserId(req.body.userId);
+    const userName = sanitizeText(req.body.userName, MAX_DISPLAY_NAME_LENGTH);
+    const text = sanitizeText(req.body.text, MAX_COMMENT_LENGTH);
+
+    if (!userId || !text) {
+      return res.status(400).json({ error: 'User and comment text are required' });
+    }
+
+    const updatedReport = await reportStore.addComment(req.params.id, {
+      userId,
+      userName,
+      text
+    });
+
+    if (!updatedReport) {
+      return res.status(404).json({ error: 'Report not found or comment invalid' });
+    }
+
+    res.status(201).json(updatedReport);
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+});
+
+// Toggle reaction on a report
+app.post('/api/reports/:id/reactions', async (req, res) => {
+  try {
+    const userId = sanitizeUserId(req.body.userId);
+    const reactionType = sanitizeText(req.body.reactionType, 16).toLowerCase();
+
+    if (!userId || !VALID_REACTION_TYPES.includes(reactionType)) {
+      return res.status(400).json({ error: 'Invalid user or reaction type' });
+    }
+
+    const updatedReport = await reportStore.toggleReaction(req.params.id, userId, reactionType);
+
+    if (!updatedReport) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    res.json(updatedReport);
+  } catch (error) {
+    console.error('Error toggling reaction:', error);
+    res.status(500).json({ error: 'Failed to toggle reaction' });
+  }
+});
+
+// Weekly leaderboard
+app.get('/api/leaderboard/weekly', async (req, res) => {
+  try {
+    const rawLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(rawLimit) ? Math.max(1, Math.min(rawLimit, 25)) : 10;
+    const leaderboard = await reportStore.getWeeklyLeaderboard(limit);
+
+    res.json({
+      windowDays: LEADERBOARD_WINDOW_DAYS,
+      generatedAt: new Date().toISOString(),
+      leaderboard
+    });
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }
 });
 
